@@ -7,11 +7,12 @@
 BCA API with Nodejs &amp; Typescript based on Official Documentation https://developer.bca.co.id/
 
 ## How to Install ?
+
 Just clone this repository and plug with your project
 
 ## Preparing your API Key
-All credentials stored at `.env` files. To get your API Key and other BCA Credentials, you can register at https://developer.bca.co.id/
 
+All credentials stored at `.env` files. To get your API Key and other BCA Credentials, you can register at https://developer.bca.co.id/
 
 ```
 // .env
@@ -46,9 +47,11 @@ For other use case please see official documentation:
 https://developer.bca.co.id/
 
 ## Anything else ?
+
 By default the access token expiration is `3600` ( `expires_in` ). For the efficiency you can store those access token anywhere else like Redis or others.
 
 ## Dependency
-- Typescript
-- Axios
-- dotenv
+
+-   Typescript
+-   Axios
+-   dotenv

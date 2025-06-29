@@ -1,17 +1,19 @@
-import BCA from './bca'
+import BCA from "./bca";
 
 export default class ForexRate {
-
-    public main(){
-        const bca = new BCA()
-        return bca.service({
-            method: 'GET',
-            url: '/general/rate/forex',
-            data: ''
-        }).then(res => {
-            return res
-        }).catch(err => {
-            return err
-        })
+    public async main(): Promise<any> {
+        const bca = new BCA();
+        return bca
+            .service({
+                method: "GET",
+                url: "/general/rate/forex",
+                data: "",
+            })
+            .then((res) => {
+                return res;
+            })
+            .catch((err) => {
+                return err;
+            });
     }
 }
