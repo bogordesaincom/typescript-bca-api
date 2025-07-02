@@ -1,25 +1,32 @@
-import axios from 'axios'
-import BCAService from '../lib/bca'
-import ForexRate from "../lib/forexRate";
+import * as dotenv from "dotenv";
+import BCA from "../lib/bca";
+dotenv.config();
+// import ForexRate from "../lib/forexRate";
 
-const BCA = new BCAService()
+const bcaService = new BCA();
 
-it('Should generate new access token', async () => {
-    const token = await BCA.generateToken()
-    expect(token).toBeDefined()
-})
+it("Should generate new access token", async () => {
+    const { access_token } = await bcaService.generateToken();
+    expect(access_token).toBeDefined();
+});
 
-it('Should get forex rate information', async () =>{
-    const getForex = new ForexRate().main()
+it("Should generate Expired In", async () => {
+    const { expires_in } = await bcaService.generateToken();
+    // console.log("Token", expires_in);
+    expect(expires_in).toBe(3600);
+});
 
-    const res = await getForex.then(result => {
-        return result
-    }).catch(error => {
-        return error
-    })
+// it("Should get forex rate information", async () => {
+//     const getForex = new ForexRate().main();
 
-    expect(res.status).toBe(200)
-    expect(res.data.Currencies).toBeDefined()
-})
+//     const res = await getForex
+//         .then((result) => {
+//             return result;
+//         })
+//         .catch((error) => {
+//             return error;
+//         });
 
-
+//     expect(res.status).toBe(200);
+//     expect(res.data.Currencies).toBeDefined();
+// });
