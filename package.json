@@ -1,6 +1,6 @@
 {
     "name": "typescript-bca-api",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "BCA API with Typescript",
     "main": "index.js",
     "directories": {
@@ -28,7 +28,6 @@
     "homepage": "https://github.com/bogordesaincom/typescript-bca-api.git#readme",
     "dependencies": {
         "@types/node": "^24.0.7",
-        "axios": "^1.10.0",
         "dotenv": "^17.0.0",
         "node-fetch": "^3.3.2"
     },
