@@ -1,41 +1,41 @@
 {
-    "name": "typescript-bca-api",
-    "version": "1.0.0",
-    "description": "BCA API with Typescript",
-    "main": "index.js",
-    "directories": {
-        "lib": "lib"
-    },
-    "scripts": {
-        "test": "jest"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/bogordesaincom/typescript-bca-api.git"
-    },
-    "keywords": [
-        "nodejs",
-        "bca-api",
-        "bca",
-        "bca-bank",
-        "bank-bca"
-    ],
-    "author": "Nanda Reynaldi",
-    "license": "MIT",
-    "bugs": {
-        "url": "https://github.com/bogordesaincom/typescript-bca-api.git/issues"
-    },
-    "homepage": "https://github.com/bogordesaincom/typescript-bca-api.git#readme",
-    "dependencies": {
-        "@types/node": "^24.0.7",
-        "axios": "^1.10.0",
-        "dotenv": "^17.0.0",
-        "node-fetch": "^3.3.2"
-    },
-    "devDependencies": {
-        "@types/jest": "^30.0.0",
-        "jest": "^29.7.0",
-        "ts-jest": "^29.4.0",
-        "typescript": "^5.8.3"
-    }
+  "name": "typescript-bca-api",
+  "version": "1.1.0",
+  "description": "BCA API with Typescript",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "jest",
+    "preinstall": "node preinstall.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bogordesaincom/typescript-bca-api.git"
+  },
+  "keywords": [
+    "nodejs",
+    "bca-api",
+    "bca",
+    "bca-bank",
+    "bank-bca"
+  ],
+  "author": "Nanda Reynaldi",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bogordesaincom/typescript-bca-api.git/issues"
+  },
+  "homepage": "https://github.com/bogordesaincom/typescript-bca-api.git#readme",
+  "dependencies": {
+    "@types/node": "^24.0.7",
+    "dotenv": "^17.0.0",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.0",
+    "typescript": "^5.8.3"
+  }
 }
