@@ -49,13 +49,6 @@ describe("BCA API Integration Tests", () => {
             timestamp
         );
 
-        // console.log("Request Headers:", {
-        //     Authorization: `Bearer ${token}`,
-        //     "X-BCA-Key": bcaService.API_KEY,
-        //     "X-BCA-Timestamp": timestamp,
-        //     "X-BCA-Signature": signature,
-        // });
-
         try {
             const response = await fetch(url, {
                 method: "GET",
@@ -64,17 +57,17 @@ describe("BCA API Integration Tests", () => {
                     "X-BCA-Key": bcaService.API_KEY,
                     "X-BCA-Timestamp": timestamp,
                     "X-BCA-Signature": signature,
-                    // "Content-Type": "application/json", ❌ JANGAN pasang ini untuk GET
+                    "Content-Type": "application/json",
                 },
             });
 
-            const contentType = response.headers.get("content-type") || "";
-            let result;
-            if (contentType.includes("application/json")) {
-                result = await response.json();
-            } else {
-                result = await response.text();
-            }
+            // const contentType = response.headers.get("content-type") || "";
+            // let result;
+            // if (contentType.includes("application/json")) {
+            const result = await response.json();
+            // } else {
+            //     result = await response.text();
+            // }
 
             if (!response.ok) {
                 throw new Error(
@@ -100,10 +93,6 @@ describe("BCA API Integration Tests", () => {
             expect(response.status).toBe(200);
             expect(response.ok).toBe(true);
             expect(result).toHaveProperty("Currencies");
-
-            // expect(mappers).toBe(3600);
-
-            // console.log("Raw API Response:", response);
         } catch (error: any) {
             console.error("Raw Request Failed:", {
                 message: error.message,
