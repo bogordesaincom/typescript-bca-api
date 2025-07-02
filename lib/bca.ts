@@ -1,203 +1,149 @@
-import axios from "axios";
 import crypto from "crypto";
 import * as dotenv from "dotenv";
 dotenv.config();
 
 interface IRequest {
-    method: any;
+    method: string;
     url: string;
     data?: any;
 }
 
-export default class BCA {
-    /**
-     * BCA Client ID
-     * BCA APIs is using OAuth 2.0 as the authorization framework.
-     * To get the access token, you need to be authorized by client_id and client_secret
-     * To generate Client ID go to https://developer.bca.co.id/
-     * @private
-     */
-    private CLIENT_ID: string = process.env.BCA_CLIENT_ID || "";
+export interface IResponseToken {
+    access_token: string;
+    token_type: string;
+    expires_in: number;
+    scope: string;
+}
 
-    /**
-     * BCA Client Secret ID this will be pairing with Client ID
-     * BCA APIs is using OAuth 2.0 as the authorization framework.
-     * To get the access token, you need to be authorized by client_id and client_secret
-     * To generate Client Secret ID go to https://developer.bca.co.id/
-     * @private
-     */
-    private CLIENT_SECRET: string = process.env.BCA_CLIENT_SECRET || "";
+export interface IExpiresIn {
+    expires_in: number;
+}
 
-    /**
-     * BCA API Key Secret
-     * To generate API Key Secret go to https://developer.bca.co.id/
-     * @private
-     */
+export interface RateInterface {
+    RateType: string;
+    Buy: string;
+    Sell: string;
+    LastUpdate: string;
+}
 
-    private API_KEY_SECRET: string = process.env.BCA_API_KEY_SECRET || "";
+export interface CurrencyInterface {
+    CurrencyCode: string;
+    RateDetail: RateInterface[];
+}
 
-    /**
-     * BCA Public API Key
-     * To generate Public API Key go to https://developer.bca.co.id/
-     */
+export default class BcaService {
+    private CLIENT_ID = process.env.BCA_CLIENT_ID || "";
+    private CLIENT_SECRET = process.env.BCA_CLIENT_SECRET || "";
+    private API_KEY_SECRET = process.env.BCA_API_KEY_SECRET || "";
+    public API_KEY = process.env.BCA_API_KEY || "";
+    private ACCESS_TOKEN = "";
 
-    public API_KEY: string = process.env.BCA_API_KEY || "";
-
-    /**
-     * Valid BCA Access Token. The value will be assigned
-     * when generateToken() is called
-     * @private
-     */
-
-    private ACCESS_TOKEN: string = "";
-
-    /**
-     * BCA Base URL based on ENV Variable
-     */
-    public baseUrl: string =
-        process.env.NODE_ENV != "production"
+    public baseUrl =
+        process.env.NODE_ENV !== "production"
             ? "https://sandbox.bca.co.id"
             : "https://api.klikbca.com:443";
 
-    /**
-     * Main Public Function. This function can be called globally
-     * will interact with axios instance based on config params
-     * @param config - is axios config
-     */
     public async service(config: IRequest) {
-        await this.generateToken();
-        const request = this.axiosInstance();
-        return request({
-            method: config.method,
-            url: config.url,
-            data: config.data,
-        });
-    }
+        if (!this.ACCESS_TOKEN) {
+            await this.generateToken();
+        }
 
-    /**
-     * Base Axios Instance and Axios Interceptor
-     * Before we send the request, interceptor will generate
-     * the signature that required by BCA API
-     * Read more: https://developer.bca.co.id/documentation/?shell#signature
-     * @private
-     */
-    private axiosInstance() {
-        const timeStamp = new Date().toISOString();
-        const instance = axios.create({
-            timeout: 60000,
-            baseURL: this.baseUrl,
-            headers: {
-                Authorization: `Bearer ${this.ACCESS_TOKEN}`,
-                "Content-Type": "application/json",
-                "X-BCA-Key": this.API_KEY,
-                "X-BCA-Timestamp": timeStamp,
-            },
-        });
+        const timestamp = new Date().toISOString();
+        const method = config.method.toUpperCase();
+        const fullUrl = new URL(config.url, this.baseUrl);
+        const pathOnly = fullUrl.pathname;
 
-        // Axios Interceptor generate signature and inject to the headers
-        instance.interceptors.request.use(async (config) => {
-            const method: string = (config.method ?? "GET").toUpperCase();
-            const timeStamp = new Date().toISOString(); // pastikan timestamp didefinisikan
-            const url = config.url ?? "";
-
-            const signature = await this.generateSignature(
-                method,
-                url,
-                this.ACCESS_TOKEN,
-                config.data,
-                timeStamp
-            );
-
-            if (config.headers && typeof config.headers.set === "function") {
-                config.headers.set("X-BCA-Signature", signature);
-            } else if (config.headers) {
-                // Fallback jika headers masih dalam bentuk biasa
-                config.headers["X-BCA-Signature"] = signature;
-            }
-
-            return config;
-        });
-
-        return instance;
-    }
-
-    /**
-     * Generate BCA Access Token with grant_type = client_credentials
-     * Read more: https://developer.bca.co.id/documentation/?shell#oauth2-0
-     */
-    public async generateToken(): Promise<any> {
-        const grantType: string = "grant_type=client_credentials";
-        const responseToken = await axios.post(
-            `${this.baseUrl}/api/oauth/token`,
-            grantType,
-            {
-                headers: {
-                    Authorization: `Basic ${this.encodeAuthorization()}`,
-                    "Content-Type": "application/x-www-form-urlencoded",
-                },
-            }
+        const requestBody = config.data || "";
+        const signature = await this.generateSignature(
+            method,
+            pathOnly,
+            this.ACCESS_TOKEN,
+            requestBody,
+            timestamp
         );
-        // .then((res) => {
-        //     this.ACCESS_TOKEN = res.data.access_token;
-        // })
-        // .catch((err) => {
-        //     return err;
-        // });
 
-        return {
-            access_token: responseToken.data.access_token,
-            token_type: responseToken.data.token_type,
-            expires_in: responseToken.data.expires_in,
+        const headers: HeadersInit = {
+            Authorization: `Bearer ${this.ACCESS_TOKEN}`,
+            "X-BCA-Key": this.API_KEY,
+            "X-BCA-Timestamp": timestamp,
+            "X-BCA-Signature": signature,
+            "Content-Type": "application/json",
         };
-        // console.log(responseToken);
+
+        const response = await fetch(fullUrl.href, {
+            method,
+            headers,
+            body: ["POST", "PUT", "PATCH"].includes(method)
+                ? JSON.stringify(config.data || {})
+                : undefined,
+        });
+
+        if (!response.ok) {
+            const errorData = await response.text();
+            throw new Error(`BCA API Error: ${response.status} - ${errorData}`);
+        }
+
+        return response.json();
     }
 
-    /**
-     * Generate SHA-256 HMAC Signature
-     * This signature will be generated and used for each request
-     * Read more: https://developer.bca.co.id/documentation/?shell#signature
-     * @param httpMethod - is HTTP Method
-     * @param urlPath - is BCA URL Path that we're called
-     * @param accessToken - Generated new access token
-     * @param body - is request body to be called
-     * @param timeStamp - current timestamp
-     */
-    private async generateSignature(
+    public async generateToken(): Promise<IResponseToken> {
+        const tokenUrl = `${this.baseUrl}/api/oauth/token`;
+        const grantType = "grant_type=client_credentials";
+
+        const headers: HeadersInit = {
+            Authorization: `Basic ${this.encodeAuthorization()}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+        };
+
+        const response = await fetch(tokenUrl, {
+            method: "POST",
+            headers,
+            body: grantType,
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Token Error: ${response.status} - ${errorText}`);
+        }
+
+        const data: IResponseToken = await response.json();
+        this.ACCESS_TOKEN = data.access_token;
+
+        return data;
+    }
+
+    public async generateSignature(
         httpMethod: string,
         urlPath: string,
         accessToken: string,
         body: any,
         timeStamp: string
-    ) {
-        const bodyHash: string = await this.hash(body);
-        const stringToSign: any = `${httpMethod}:${urlPath}:${accessToken}:${bodyHash}:${timeStamp}`;
+    ): Promise<string> {
+        const bodyHash = await this.hash(body);
+        const stringToSign = `${httpMethod}:${urlPath}:${accessToken}:${bodyHash}:${timeStamp}`;
+
         return crypto
             .createHmac("sha256", this.API_KEY_SECRET)
             .update(stringToSign)
             .digest("hex");
     }
 
-    /**
-     * Hash body data into SHA256
-     * Hash format Lowercase(HexEncode(SHA-256(RequestBody)))
-     * @param data - is request body data
-     * @private
-     */
-    private async hash(data: any) {
-        if (typeof data === "object") data = JSON.stringify(data);
+    private async hash(data: any): Promise<string> {
+        if (data === null || data === undefined) {
+            data = "";
+        } else if (typeof data === "object") {
+            data = JSON.stringify(data);
+        } else {
+            data = String(data);
+        }
+
         return crypto
             .createHash("sha256")
             .update(data.replace(/\s/g, ""))
             .digest("hex");
     }
 
-    /**
-     * Encode Client ID and Client Secret into Base64
-     * Authorization Basic base64(client_id:client_secret)
-     * Read more: https://developer.bca.co.id/documentation/?shell#oauth2-0
-     * @private
-     */
-    private encodeAuthorization() {
+    private encodeAuthorization(): string {
         return Buffer.from(`${this.CLIENT_ID}:${this.CLIENT_SECRET}`).toString(
             "base64"
         );
