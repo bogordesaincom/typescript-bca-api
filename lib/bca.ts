@@ -1,6 +1,7 @@
 import axios from "axios";
 import crypto from "crypto";
-require("dotenv").config();
+import * as dotenv from "dotenv";
+dotenv.config();
 
 interface IRequest {
     method: any;
@@ -16,7 +17,7 @@ export default class BCA {
      * To generate Client ID go to https://developer.bca.co.id/
      * @private
      */
-    private CLIENT_ID: string = process.env.BCA_CLIENT_ID;
+    private CLIENT_ID: string = process.env.BCA_CLIENT_ID || "";
 
     /**
      * BCA Client Secret ID this will be pairing with Client ID
@@ -25,7 +26,7 @@ export default class BCA {
      * To generate Client Secret ID go to https://developer.bca.co.id/
      * @private
      */
-    private CLIENT_SECRET: string = process.env.BCA_CLIENT_SECRET;
+    private CLIENT_SECRET: string = process.env.BCA_CLIENT_SECRET || "";
 
     /**
      * BCA API Key Secret
@@ -33,14 +34,14 @@ export default class BCA {
      * @private
      */
 
-    private API_KEY_SECRET: string = process.env.BCA_API_KEY_SECRET;
+    private API_KEY_SECRET: string = process.env.BCA_API_KEY_SECRET || "";
 
     /**
      * BCA Public API Key
      * To generate Public API Key go to https://developer.bca.co.id/
      */
 
-    public API_KEY: string = process.env.BCA_API_KEY;
+    public API_KEY: string = process.env.BCA_API_KEY || "";
 
     /**
      * Valid BCA Access Token. The value will be assigned
@@ -48,7 +49,7 @@ export default class BCA {
      * @private
      */
 
-    private ACCESS_TOKEN: string;
+    private ACCESS_TOKEN: string = "";
 
     /**
      * BCA Base URL based on ENV Variable
@@ -87,7 +88,7 @@ export default class BCA {
             baseURL: this.baseUrl,
             headers: {
                 Authorization: `Bearer ${this.ACCESS_TOKEN}`,
-                "Content-Type": "Content-Type: application/json",
+                "Content-Type": "application/json",
                 "X-BCA-Key": this.API_KEY,
                 "X-BCA-Timestamp": timeStamp,
             },
@@ -95,17 +96,18 @@ export default class BCA {
 
         // Axios Interceptor generate signature and inject to the headers
         instance.interceptors.request.use(async (config) => {
-            const method: string = config.method.toUpperCase();
+            const method: string = (config.method ?? "GET").toUpperCase();
             const timeStamp = new Date().toISOString(); // pastikan timestamp didefinisikan
+            const url = config.url ?? "";
+
             const signature = await this.generateSignature(
                 method,
-                config.url,
+                url,
                 this.ACCESS_TOKEN,
                 config.data,
                 timeStamp
             );
 
-            // Pastikan headers sudah berupa instance AxiosHeaders
             if (config.headers && typeof config.headers.set === "function") {
                 config.headers.set("X-BCA-Signature", signature);
             } else if (config.headers) {
@@ -125,19 +127,29 @@ export default class BCA {
      */
     public async generateToken(): Promise<any> {
         const grantType: string = "grant_type=client_credentials";
-        return axios
-            .post(`${this.baseUrl}/api/oauth/token`, grantType, {
+        const responseToken = await axios.post(
+            `${this.baseUrl}/api/oauth/token`,
+            grantType,
+            {
                 headers: {
                     Authorization: `Basic ${this.encodeAuthorization()}`,
                     "Content-Type": "application/x-www-form-urlencoded",
                 },
-            })
-            .then((res) => {
-                this.ACCESS_TOKEN = res.data.access_token;
-            })
-            .catch((err) => {
-                return err;
-            });
+            }
+        );
+        // .then((res) => {
+        //     this.ACCESS_TOKEN = res.data.access_token;
+        // })
+        // .catch((err) => {
+        //     return err;
+        // });
+
+        return {
+            access_token: responseToken.data.access_token,
+            token_type: responseToken.data.token_type,
+            expires_in: responseToken.data.expires_in,
+        };
+        // console.log(responseToken);
     }
 
     /**
@@ -171,7 +183,7 @@ export default class BCA {
      * @param data - is request body data
      * @private
      */
-    private hash(data): any {
+    private async hash(data: any) {
         if (typeof data === "object") data = JSON.stringify(data);
         return crypto
             .createHash("sha256")
